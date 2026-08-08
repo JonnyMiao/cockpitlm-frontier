@@ -1,0 +1,279 @@
+# vinext-starter
+
+A clean full-stack starter running on
+[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
+Drizzle support.
+
+## Prerequisites
+
+- Node.js `>=22.13.0`
+
+## Quick Start
+
+```bash
+npm install
+npm run dev
+npm run build
+```
+
+This starter does not use `wrangler.jsonc`.
+
+## Included Shape
+
+- edit site code under `app/`
+- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
+- `vite.config.ts` simulates declared bindings for local development
+- `db/schema.ts` starts intentionally empty
+- `examples/d1/` contains an optional D1 example surface
+- `drizzle.config.ts` supports local migration generation when needed
+
+## Workspace Auth Headers
+
+Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
+
+The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
+
+SIWC-authenticated workspace sites may also receive
+`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
+`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
+`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+
+Treat the full name as optional and fall back to email when it is absent:
+
+```tsx
+import { headers } from "next/headers";
+
+export default async function Home() {
+  const requestHeaders = await headers();
+  const userId = requestHeaders.get("oai-authenticated-user-id");
+  const email = requestHeaders.get("oai-authenticated-user-email");
+  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
+  const fullName =
+    encodedFullName &&
+    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
+      "percent-encoded-utf-8"
+      ? decodeURIComponent(encodedFullName)
+      : null;
+
+  const displayName = fullName ?? email;
+  // ...
+}
+```
+
+## Optional Dispatch-Owned ChatGPT Sign-In
+
+Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
+optional or required ChatGPT sign-in:
+
+- Use `getChatGPTUser()` for optional signed-in UI.
+- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
+  anonymous visitors through Sign in with ChatGPT.
+- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
+  browser links or actions.
+- Pass a same-origin relative `returnTo` path for the destination after sign-in
+  or sign-out. The helper validates and safely encodes it.
+- Mark protected pages with `export const dynamic = "force-dynamic"` because
+  they depend on per-request identity headers.
+
+Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
+OAuth cookies, and identity header injection. Do not implement app routes for
+those reserved paths. Routes that do not import and call the helper remain
+anonymous-compatible.
+
+SIWC establishes identity only; it does not prove workspace membership. Use the
+Sites hosting platform's access policy controls for workspace-wide restrictions,
+or enforce explicit server-side membership or allowlist checks.
+
+Use SIWC for account pages, user-specific dashboards, saved records, and write
+actions tied to the current ChatGPT user. Leave public content anonymous.
+
+## Useful Commands
+
+- `npm run dev`: start local development
+- `npm run build`: verify the vinext build output
+- `npm test`: build the starter and verify its rendered loading skeleton
+- `npm run db:generate`: generate Drizzle migrations after schema changes
+
+## Learn More
+
+- [vinext Documentation](https://github.com/cloudflare/vinext)
+- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+# CockpitLM Frontier
+
+**VLM · OMNI · World Models for Intelligent Cockpits**
+
+CockpitLM Frontier is a research-intelligence platform for converting frontier multimodal research into cockpit research plans and engineering decisions. It connects:
+
+> Paper → Method → Model → Dataset / Benchmark → Trend → Cockpit Relevance → Engineering Recommendation
+
+It is intentionally not a paper-listing demo. The repository includes a real research corpus, modular ingestion providers, normalization and deduplication, a relational schema, deterministic research-intelligence layers, server-side filtering, topic momentum analysis, cockpit transfer taxonomy and engineering playbooks.
+
+## Current capabilities
+
+- 1,200 real source records fetched from the public arXiv API during the initial ingestion run.
+- Modular arXiv, OpenAlex and Crossref provider adapters.
+- Fetch → parse → validate → normalize → deduplicate → classify → publish pipeline.
+- DOI-first and arXiv-ID-first deduplication, with normalized-title / year / author-overlap fallback.
+- Source metadata separated from generated taxonomy, scoring and cockpit-transfer intelligence.
+- Server-rendered, paginated paper search with topic, cockpit task, modality, category, year and score filters.
+- Paper detail pages with provenance, architecture signals, three decision scores, cockpit transfer and recommended experiments.
+- Topic dossiers, 90-day research radar, cockpit technical map, model / dataset / benchmark databases and engineering playbooks.
+- Light and dark themes with desktop-first responsive layouts.
+
+## Architecture
+
+```text
+Academic providers
+  ├─ arXiv (active bulk ingestion)
+  ├─ OpenAlex (adapter)
+  └─ Crossref (adapter)
+        ↓
+Fetch → Parse → Validate → Normalize → Deduplicate
+        ↓
+SourcePaper corpus (immutable source fields + provenance)
+        ↓
+Taxonomy → Three Scores → Cockpit Transfer → Experiments
+        ↓
+Repository / API → Next-compatible server routes → Research UI
+        ↓
+Cloudflare Worker + D1 schema and migrations
+```
+
+The application uses React 19, strict TypeScript, vinext and Cloudflare Worker-compatible ESM output. Drizzle defines the D1 / SQLite schema. Source metadata and generated research intelligence are stored in separate entities.
+
+## Project structure
+
+```text
+app/                    Routes, pages and JSON APIs
+components/             Reusable research UI components
+data/papers.json        Ingested, source-traceable arXiv corpus
+data/entities.ts        Source-linked model, dataset and benchmark profiles
+data/playbooks.ts       Maintained engineering decision guides
+db/schema.ts            Relational research knowledge schema
+drizzle/                Generated, versioned SQLite / D1 migrations
+lib/providers/          Modular metadata-provider adapters
+lib/ingestion/          Validation and ingestion orchestration
+lib/                    Normalization, deduplication, taxonomy, scoring, repository
+scripts/ingest.ts       Incremental ingestion entry point
+tests/                  Parsing, normalization, deduplication, taxonomy, scoring, search and render tests
+worker/                  Cloudflare Worker entry point
+```
+
+## Install and run
+
+Requirements: Node.js 22.13 or newer and npm.
+
+```bash
+npm ci
+npm run dev
+```
+
+The public arXiv ingestion requires no API key. `.env.example` documents optional provider configuration when new enrichers are enabled. Never commit provider secrets.
+
+## Database and migrations
+
+The logical D1 binding is `DB`, configured in `.openai/hosting.json`. The schema includes:
+
+- `papers`, `paper_authors` and source identifiers / provenance;
+- `topics`, `methods`, `cockpit_tasks` and many-to-many paper relations;
+- `models`, `datasets`, `benchmarks` and paper-to-entity relations;
+- `research_intelligence` with separately versioned scoring output;
+- `ingestion_runs` for provider-level operational history.
+
+Generate a migration after editing `db/schema.ts`:
+
+```bash
+npm run db:generate
+```
+
+Inspect every generated SQL file under `drizzle/` before deployment. Production deployment owns the physical D1 resource and applies packaged migrations. The checked-in source corpus is also a read-only operational fallback so the research UI does not fail when D1 is empty or unavailable.
+
+## Ingestion and incremental updates
+
+Run the complete arXiv ingestion target:
+
+```bash
+npm run ingest
+```
+
+Run a smaller development refresh:
+
+```bash
+npm run ingest:quick
+```
+
+The script queries multiple research directions, validates records, normalizes metadata, deduplicates against the existing corpus, preserves provenance and writes the corpus atomically. It logs structured JSON and retries each provider query. One failed query is recorded and does not discard successful results or the previous corpus.
+
+`.github/workflows/ingest.yml` runs a daily incremental refresh and commits only real corpus changes after validation. Citation enrichment and conference-specific refreshes should be separate scheduled jobs because they have different rate limits and update semantics.
+
+### Adding a provider
+
+1. Implement `ResearchProvider` from `lib/providers/types.ts`.
+2. Map the provider response into `SourcePaper`; do not place generated summaries or scores in source fields.
+3. Preserve the provider record ID, canonical source URL and retrieval timestamp.
+4. Register the provider in `lib/providers/index.ts`.
+5. Add fixture-based parsing and failure tests.
+6. Add its stable identifier to the canonical-key precedence when appropriate.
+7. Respect provider rate limits, retry headers, licensing and cache guidance.
+
+## Taxonomy and scoring
+
+Taxonomy rules live in `lib/taxonomy.ts`. The main research topics are multimodal fusion, video VLM, native OMNI, VLM fine-tuning, distillation, edge VLM, world models, multimodal agents and multimodal reasoning.
+
+Cockpit taxonomy covers perception, driver / occupant state, behavior / events, intention / reasoning, interaction, agent / execution and deployment. A paper can map to multiple topics and cockpit tasks, each with visible evidence.
+
+To add a taxonomy entry:
+
+1. Add a stable slug, name and specific evidence terms.
+2. For a cockpit task, add a group and transfer rationale.
+3. Add a positive and negative fixture test.
+4. Review corpus-wide match counts for overly broad terms.
+5. Bump the classifier version when the meaning changes.
+
+The three scores are independent 1–5 decision aids:
+
+- **Frontier Score**: recency and frontier-topic signals—not citation impact.
+- **Cockpit Relevance**: explicit transferable task and engineering signals.
+- **Engineering Readiness**: verified metadata signals for code / artifacts and deployment methods.
+
+Each score includes an explanation. They are deliberately coarse heuristics and never replace verified results, artifact review or safety validation.
+
+## APIs
+
+- `GET /api/papers` — paginated search and filtering.
+- `GET /api/papers/:id` — enriched paper detail with provenance.
+- `GET /api/radar` — sample-aware 90-day topic comparison.
+- `GET /api/health` — service, provider and corpus status.
+
+## Quality checks
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:render
+```
+
+Tests cover ingestion parsing, normalization, deduplication, taxonomy mapping, scoring, search, filtering, pagination and server rendering.
+
+## Deployment
+
+The production build emits a Cloudflare Worker-compatible application under `dist/`. Sites packages the exact validated build, `.openai/hosting.json` and Drizzle migrations, then saves and deploys a version.
+
+## Data sources
+
+- arXiv public API for the checked-in research corpus.
+- OpenAlex and Crossref adapters for optional metadata enrichment.
+- Official model cards, dataset sites and benchmark projects for maintained knowledge-entity profiles.
+
+Every paper record stores provider, provider record ID, source URL, source update time and retrieval time. Missing data is displayed as `Unknown`, `Not reported` or `Unavailable`; it is never guessed.
+
+## Known limitations
+
+- The checked-in corpus is a targeted snapshot, not a claim of complete field coverage.
+- arXiv metadata often omits code, weights, training recipes, datasets and final venue information.
+- Research intelligence currently uses deterministic abstract-level extraction and rules; quantitative claims are intentionally not extracted without verification.
+- Topic momentum represents this corpus and query strategy, not the total publication volume of the field.
+- OpenReview, CVF Open Access, ACL Anthology, Semantic Scholar, GitHub and Hugging Face enrichment are planned provider modules, not silently simulated data.
+- Cockpit transfer is a research recommendation that still requires domain data, controlled experiments, safety review and target-hardware profiling.
