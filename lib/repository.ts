@@ -1,6 +1,7 @@
 import sourcePapers from "@/data/papers.json";
 import type { EnrichedPaper, PaginatedPapers, PaperQuery, SourcePaper } from "@/types/research";
 import { enrichPaper } from "./classify";
+import { paperIdFromSlug } from "./routes";
 
 const corpus = (sourcePapers as SourcePaper[]).map(enrichPaper);
 
@@ -14,7 +15,7 @@ export function allPapers(): EnrichedPaper[] {
 
 export function listPapers(query: PaperQuery = {}): PaginatedPapers {
   const page = Math.max(1, query.page ?? 1);
-  const pageSize = Math.max(10, Math.min(50, query.pageSize ?? 25));
+  const pageSize = Math.max(1, Math.min(50, query.pageSize ?? 25));
   const needle = query.query?.trim().toLowerCase();
   let filtered = corpus.filter((paper) => {
     const haystack = `${paper.title} ${paper.abstract} ${paper.authors.join(" ")} ${paper.topics.map((item) => item.name).join(" ")} ${paper.techniques.map((item) => item.name).join(" ")}`.toLowerCase();
@@ -40,7 +41,7 @@ export function listPapers(query: PaperQuery = {}): PaginatedPapers {
 }
 
 export function getPaper(id: string): EnrichedPaper | undefined {
-  const decoded = decodeURIComponent(id);
+  const decoded = paperIdFromSlug(id);
   return corpus.find((paper) => paper.id === decoded || paper.source.recordId.replace(/v\d+$/i, "") === decoded);
 }
 

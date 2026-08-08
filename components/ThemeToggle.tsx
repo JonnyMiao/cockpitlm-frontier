@@ -2,8 +2,9 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
+import type { Locale } from "@/lib/i18n";
 
-export function ThemeToggle() {
+export function ThemeToggle({ locale }: { locale: Locale }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   useEffect(() => {
     const saved = document.documentElement.dataset.theme;
@@ -18,5 +19,6 @@ export function ThemeToggle() {
     localStorage.setItem("cockpitlm-theme", next);
     setTheme(next);
   }
-  return <button type="button" className="icon-button" onClick={toggle} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button>;
+  const label = locale === "zh" ? `切换到${theme === "dark" ? "浅色" : "深色"}模式` : `Switch to ${theme === "dark" ? "light" : "dark"} mode`;
+  return <button type="button" className="icon-button" onClick={toggle} aria-label={label} title={label}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button>;
 }
