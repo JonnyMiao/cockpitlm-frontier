@@ -1,4 +1,4 @@
-import Link from "next/link";
+/* eslint-disable @next/next/no-html-link-for-pages -- Full-page navigation avoids a deployed vinext router stall. */
 import { Code2, Database, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageToggle } from "./LanguageToggle";
@@ -14,24 +14,24 @@ export function AppShell({ children, locale }: { children: React.ReactNode; loca
     <div className="app-shell">
       <header className="site-header">
         <div className="header-main container-wide">
-          <Link className="brand" href="/" aria-label={t(locale, "CockpitLM Frontier 首页", "CockpitLM Frontier home")}>
+          <a className="brand" href="/" aria-label={t(locale, "CockpitLM Frontier 首页", "CockpitLM Frontier home")}>
             <span className="brand-mark">CLM</span>
             <span><strong>CockpitLM Frontier</strong><small>{t(locale, "前沿研究情报", "Research Intelligence")}</small></span>
-          </Link>
+          </a>
           <form className="header-search" action="/papers">
             <Search size={15} aria-hidden="true" />
             <input name="q" aria-label={t(locale, "全站研究搜索", "Global research search")} placeholder={t(locale, "搜索论文、方法、模型、数据集…", "Search papers, methods, models, datasets…")} />
             <kbd>/</kbd>
           </form>
           <div className="header-actions">
-            <Link className="icon-button" href="https://github.com/JonnyMiao/cockpitlm-frontier" aria-label={t(locale, "GitHub 代码仓库", "GitHub repository")} target="_blank" rel="noreferrer"><Code2 size={17} /></Link>
+            <a className="icon-button" href="https://github.com/JonnyMiao/cockpitlm-frontier" aria-label={t(locale, "GitHub 代码仓库", "GitHub repository")} target="_blank" rel="noreferrer"><Code2 size={17} /></a>
             <LanguageToggle locale={locale} />
             <ThemeToggle locale={locale} />
           </div>
         </div>
         <nav className="site-nav container-wide" aria-label={t(locale, "主导航", "Primary navigation")}>
-          {navigation.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}
-          <Link className="nav-radar" href="/radar"><span className="status-dot" /> {t(locale, "研究雷达", "Research Radar")}</Link>
+          {navigation.map(([label, href]) => <a key={href} href={href}>{label}</a>)}
+          <a className="nav-radar" href="/radar"><span className="status-dot" /> {t(locale, "研究雷达", "Research Radar")}</a>
         </nav>
       </header>
       <main>{children}</main>
