@@ -1,0 +1,5 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { parseArxivFeed } from "../lib/providers/arxiv";
+const xml=`<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom"><entry><id>http://arxiv.org/abs/2601.00001v1</id><updated>2026-01-02T00:00:00Z</updated><published>2026-01-01T00:00:00Z</published><title>Test Vision Language Model</title><summary>A verified source abstract.</summary><author><name>Ada Researcher</name></author><category term="cs.CV"/><arxiv:primary_category term="cs.CV"/><link href="https://arxiv.org/abs/2601.00001" rel="alternate"/><link title="pdf" href="https://arxiv.org/pdf/2601.00001" type="application/pdf"/></entry></feed>`;
+test("parses arXiv Atom metadata with provenance",()=>{const records=parseArxivFeed(xml,"2026-01-03T00:00:00Z");assert.equal(records.length,1);assert.equal(records[0].title,"Test Vision Language Model");assert.deepEqual(records[0].authors,["Ada Researcher"]);assert.equal(records[0].source.provider,"arxiv");assert.equal(records[0].source.retrievedAt,"2026-01-03T00:00:00Z")});
